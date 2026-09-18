@@ -313,10 +313,12 @@ def publicar_cambios():
         print(f"  No se pudo publicar ahora ({e}); la tarea programada lo intentará sola.")
         return
     lineas = [l for l in (r.stdout + r.stderr).splitlines() if l.strip()]
-    print("  " + (lineas[-1] if lineas else ""))
     if r.returncode == 0:
+        print("  " + (lineas[-1] if lineas else ""))
         print("  La página lo tendrá en uno o dos minutos (GitHub Pages tarda un poco en publicar).")
     else:
+        for linea in lineas[-4:]:
+            print("  " + linea)
         print("  No se pudo publicar ahora; la tarea programada lo intentará en su próxima pasada,\n"
               "  o puedes reintentar con: python sincronizar.py")
 

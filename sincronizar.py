@@ -150,11 +150,19 @@ def scripts_desactualizados():
 
 
 def es_copia_automatica():
-    """Solo la copia creada por --instalar se puede sobrescribir con reset --hard."""
-    if not (CLON / ".git").exists():
-        return False
-    r = git("config", "--local", "--get", "stockdti.auto", check=False)
-    return r.stdout.strip() == "true"
+    """Solo la copia creada por --instalar se puede sobrescribir con reset --hard.
+
+    Se reintenta una vez: alguna vez el antivirus o el indexador dejan la carpeta
+    inaccesible un instante y no conviene abortar la sincronización por eso.
+    """
+    for intento in range(2):
+        if (CLON / ".git").exists():
+            r = git("config", "--local", "--get", "stockdti.auto", check=False)
+            if r.stdout.strip() == "true":
+                return True
+        if intento == 0:
+            time.sleep(2)
+    return False
 
 
 def tomar_bloqueo():
@@ -221,7 +229,9 @@ def ciclo(fuente):
     """Una sincronización. fuente: ["--db"] o [ruta del Excel].
     Devuelve (resultado, última línea del generador)."""
     if not es_copia_automatica():
-        raise ErrorSync(f"No existe la copia automática en {CLON}. "
+        detalle = ("la carpeta existe pero no está marcada como copia automática"
+                   if (CLON / ".git").exists() else "no existe o no se pudo leer")
+        raise ErrorSync(f"No se pudo usar la copia automática de {CLON}: {detalle}. "
                         "Ejecuta: python sincronizar.py --instalar")
     limpiar_bloqueos_git()
     detalle = ""
