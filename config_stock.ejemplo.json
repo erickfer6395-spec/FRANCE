@@ -1,0 +1,32 @@
+{
+  "_ayuda": [
+    "Plantilla de config_stock.json. Cópiala a %LOCALAPPDATA%\\StockDTI\\config_stock.json y edítala.",
+    "Ese archivo no se sube a GitHub: el repositorio es público.",
+    "codigo: idMaterial del ERP. Para encontrarlo: python generar_datos.py --buscar TEXTO",
+    "        Puede ser una lista [\"A\", \"B\"] si la referencia suma varios materiales.",
+    "tipo, descripcion, afectacion, unidad: el texto que se ve en la página (en francés).",
+    "afectacion: si empieza por «★ Exclusif» la página la muestra con distintivo.",
+    "factor (opcional): número mayor que 0 que multiplica la cantidad del ERP.",
+    "Después de editarlo: python generar_datos.py --db --probar"
+  ],
+  "titulo": "Disponibilités de stock DTI",
+  "subtitulo": "Stock DTI disponible à date – stock global ou exclusif selon affectation",
+  "columnas": [
+    "TYPE",
+    "DESCRIPTION",
+    "AFFECTATION",
+    "UNITÉ",
+    "STOCK DISPONIBLE DTI"
+  ],
+  "decimales": 0,
+  "notas": [
+    "Notes : les matières identifiées comme « Exclusif … » sont spécifiquement affectées à ce client.",
+    "Les autres quantités correspondent au stock global disponible de DTI et peuvent évoluer.",
+    "Ce document est fourni à titre informatif. La disponibilité doit être confirmée auprès de DTI au moment de la commande."
+  ],
+  "referencias": [
+    {"codigo": "TE0123", "tipo": "Tissu", "descripcion": "Marts 23 Black", "afectacion": "Stock global DTI", "unidad": "ml"},
+    {"codigo": ["TE0456", "TE0457"], "tipo": "Tissu", "descripcion": "PyroGlass White", "afectacion": "★ Exclusif Client", "unidad": "ml"},
+    {"codigo": "MO0001", "tipo": "Mosqueton", "descripcion": "Gancho Petit Coulisseau Blanco 8", "afectacion": "★ Exclusif Client", "unidad": "pcs", "factor": 1}
+  ]
+}

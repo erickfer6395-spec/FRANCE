@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Disponibilités de stock DTI</title>
+  <style>
+    :root {
+      --bg: #f3f5f8;
+      --card: #ffffff;
+      --text: #1f2933;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --head: #1e3a5f;
+      --head-hover: #2b4f7e;
+      --head-text: #ffffff;
+      --stripe: #f8fafc;
+      --hover: #eaf1fb;
+      --accent: #b45309;
+      --accent-bg: #fef3c7;
+      --note-bg: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px 16px;
+      line-height: 1.4;
+    }
+    .contenedor {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px 28px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    header { margin-bottom: 18px; }
+    h1 { margin: 0 0 4px; font-size: 1.55rem; }
+    .subtitulo { color: var(--muted); margin: 0 0 6px; }
+    .fecha { font-size: 0.9rem; color: var(--muted); }
+    .fecha strong { color: var(--text); }
+
+    .barra {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    input[type="search"], select {
+      padding: 8px 11px; font-size: 1rem;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: #fff; color: var(--text);
+    }
+    input[type="search"] { flex: 1; min-width: 220px; }
+    select { max-width: 260px; }
+    .conteo { font-size: 0.85rem; color: var(--muted); margin-left: auto; white-space: nowrap; }
+
+    /* overflow: clip recorta las esquinas sin crear un contenedor de scroll,
+       así la cabecera fija (position: sticky) funciona respecto a la ventana. */
+    .tabla-wrap { overflow: clip; border: 1px solid var(--border); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    thead th {
+      background: var(--head); color: var(--head-text);
+      text-align: left; padding: 10px 12px;
+      cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 1;
+      font-size: 0.82rem; letter-spacing: 0.03em;
+    }
+    thead th:hover, thead th:focus-visible { background: var(--head-hover); outline: none; }
+    thead th:focus-visible { box-shadow: inset 0 0 0 2px #fff; }
+    thead th .flecha { opacity: 0.7; margin-left: 6px; font-size: 0.8em; }
+    tbody td { padding: 9px 12px; border-top: 1px solid var(--border); vertical-align: middle; }
+    tbody tr:nth-child(even) { background: var(--stripe); }
+    tbody tr:hover { background: var(--hover); }
+    th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.num { font-weight: 600; }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      font-size: 0.8rem; font-weight: 600; white-space: nowrap;
+      background: var(--accent-bg); color: var(--accent);
+    }
+    .vacio { text-align: center; color: var(--muted); padding: 24px; }
+
+    .notas {
+      margin-top: 18px; padding: 12px 16px;
+      background: var(--note-bg); border-left: 3px solid var(--border);
+      border-radius: 6px; font-size: 0.86rem; color: var(--muted);
+    }
+    .notas p { margin: 0 0 6px; }
+    .notas p:last-child { margin-bottom: 0; }
+
+    /* ---------- Acceso ---------- */
+    .cargando { text-align: center; color: var(--muted); margin-top: 12vh; }
+    .acceso { max-width: 400px; margin-top: 8vh; }
+    .acceso h1 { font-size: 1.35rem; }
+    .acceso form { display: grid; gap: 14px; margin-top: 18px; }
+    .acceso label { display: grid; gap: 6px; font-size: 0.9rem; font-weight: 600; }
+    .acceso input[type="text"], .acceso input[type="password"] {
+      padding: 10px 12px; font-size: 1rem; color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px; background: #fff;
+    }
+    .acceso input:focus-visible, .boton:focus-visible, .salir:focus-visible {
+      outline: 2px solid var(--head-hover); outline-offset: 2px;
+    }
+    .acceso .recordar {
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 400; color: var(--muted);
+    }
+    .boton {
+      padding: 10px 14px; font-size: 1rem; font-weight: 600; color: var(--head-text);
+      background: var(--head); border: 0; border-radius: 6px; cursor: pointer;
+    }
+    .boton:hover { background: var(--head-hover); }
+    .boton:disabled { opacity: 0.65; cursor: progress; }
+    .error {
+      margin: 0; padding: 8px 12px; border-radius: 6px;
+      background: #fee2e2; color: #991b1b; font-size: 0.9rem;
+    }
+    .cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .salir {
+      flex: none; padding: 6px 10px; font-size: 0.85rem; color: var(--muted);
+      background: none; border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+    }
+    .salir:hover { color: var(--text); border-color: var(--muted); }
+
+    /* Pantallas estrechas: la tabla se desplaza en horizontal dentro de su marco
+       y la última columna (el stock) queda siempre visible, anclada a la derecha. */
+    @media (max-width: 760px) {
+      .tabla-wrap { overflow: auto; }
+      thead th, tbody td { padding: 8px; }
+      th:last-child, td:last-child {
+        position: sticky; right: 0;
+        background: var(--card);
+        box-shadow: -6px 0 6px -6px rgba(0,0,0,0.25);
+      }
+      thead th:last-child { background: var(--head); }
+      tbody tr:nth-child(even) td:last-child { background: var(--stripe); }
+    }
+    @media (max-width: 600px) {
+      body { padding: 10px 6px; }
+      .contenedor { padding: 14px; }
+      table { font-size: 0.85rem; }
+      .conteo { margin-left: 0; }
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .contenedor { border: none; box-shadow: none; }
+      .barra, .salir { display: none; }
+      .tabla-wrap { overflow: visible; }
+      thead th { position: static; color: #000; background: #e5e7eb; border-bottom: 1px solid #999; }
+      .badge { background: none; color: #000; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <p class="cargando" id="cargando">Chargement…</p>
+
+  <main class="contenedor acceso" id="acceso" hidden>
+    <h1>Disponibilités de stock DTI</h1>
+    <p class="subtitulo">Accès réservé. Connectez-vous pour consulter le stock.</p>
+    <form id="form-acceso">
+      <label>Identifiant
+        <input type="text" id="usuario" name="username" autocomplete="username"
+               autocapitalize="none" spellcheck="false" required>
+      </label>
+      <label>Mot de passe
+        <input type="password" id="contrasena" name="password" autocomplete="current-password" required>
+      </label>
+      <label class="recordar">
+        <input type="checkbox" id="recordar">
+        Rester connecté sur cet appareil (30 jours) — pas sur un ordinateur partagé
+      </label>
+      <button type="submit" class="boton" id="entrar">Se connecter</button>
+      <p class="error" id="error-acceso" role="alert" hidden></p>
+    </form>
+  </main>
+
+  <main class="contenedor" id="panel" hidden>
+    <header class="cabecera">
+      <div>
+        <h1 id="titulo">Stock</h1>
+        <p class="subtitulo" id="subtitulo" hidden></p>
+        <div class="fecha" id="fecha"></div>
+      </div>
+      <button type="button" class="salir" id="salir">Se déconnecter</button>
+    </header>
+
+    <div class="barra" id="barra">
+      <input type="search" id="buscar" placeholder="Rechercher…" aria-label="Rechercher">
+      <span class="conteo" id="conteo" aria-live="polite"></span>
+    </div>
+
+    <div class="tabla-wrap">
+      <table id="tabla">
+        <thead><tr id="encabezado"></tr></thead>
+        <tbody id="cuerpo"><tr><td class="vacio">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="notas" id="notas" hidden></div>
+  </main>
+
+  <script>
+    (function () {
+      const $ = id => document.getElementById(id);
+
+      // ---------- Carga de datos.js sin caché ----------
+      // El parámetro cambia en cada visita para que el navegador y GitHub Pages
+      // no reutilicen una versión antigua tras actualizar el stock.
+      let PUBLICADO = null;
+
+      function cargarDatos() {
+        const s = document.createElement("script");
+        s.src = "datos.js?v=" + Date.now();
+        s.onload = () => (typeof DATOS_CIFRADOS === "undefined" ? fallo() : listo(DATOS_CIFRADOS));
+        s.onerror = () => fallo();
+        document.head.appendChild(s);
+      }
+
+      function fallo(texto) {
+        $("cargando").textContent = texto || "Impossible de charger les données (datos.js).";
+        $("cargando").hidden = false;
+      }
+
+      // ---------- Descifrado (WebCrypto) ----------
+      // datos.js es público pero está cifrado (AES-256-GCM). Cada cuenta tiene una
+      // copia de la clave de los datos, cifrada con una clave que se deriva de su
+      // contraseña (PBKDF2-SHA256), igual que en usuarios.py.
+      const deB64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+      const aB64 = bytes => btoa(String.fromCharCode(...bytes));
+      const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+
+      // La clave se deriva de la contraseña y del identificante; el id publicado sale
+      // de esa clave, así que datos.js no revela qué cuentas existen.
+      async function derivar(contrasena, sal, nombre, iteraciones) {
+        const texto = new TextEncoder();
+        const entrada = new Uint8Array([...sal, 0x7c, ...texto.encode(nombre)]);
+        const base = await crypto.subtle.importKey(
+          "raw", texto.encode(contrasena.normalize("NFC")), "PBKDF2", false, ["deriveBits"]);
+        const bits = await crypto.subtle.deriveBits(
+          { name: "PBKDF2", hash: "SHA-256", salt: entrada, iterations: iteraciones }, base, 256);
+        return new Uint8Array(bits);
+      }
+
+      async function idDesdeClave(clave) {
+        const marca = new TextEncoder().encode("stockdti-id:");
+        const h = await crypto.subtle.digest("SHA-256", new Uint8Array([...marca, ...clave]));
+        return hex(h).slice(0, 24);
+      }
+
+      async function aesDescifrar(claveBruta, iv, datos) {
+        const clave = await crypto.subtle.importKey("raw", claveBruta, "AES-GCM", false, ["decrypt"]);
+        return new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv }, clave, datos));
+      }
+
+      async function abrir(id, kek) {
+        const cuenta = PUBLICADO.cuentas && PUBLICADO.cuentas[id];
+        if (!cuenta) throw new Error("cuenta");
+        const clave = await aesDescifrar(kek, deB64(cuenta.iv), deB64(cuenta.clave));
+        const plano = await aesDescifrar(clave, deB64(PUBLICADO.iv), deB64(PUBLICADO.datos));
+        return JSON.parse(new TextDecoder().decode(plano));
+      }
+
+      // ---------- Sesión ----------
+      // Se guarda la clave derivada (no la contraseña): en la pestaña actual, o en
+      // este navegador si se marcó «Rester connecté». Sirve también para los datos
+      // que se publiquen después, mientras la contraseña no cambie.
+      const CLAVE_SESION = "stockdti.sesion";
+      const DIAS_SESION = 30;
+
+      function almacenes() {
+        const lista = [];
+        try { lista.push(window.sessionStorage); } catch (e) { /* bloqueado */ }
+        try { lista.push(window.localStorage); } catch (e) { /* bloqueado */ }
+        return lista.filter(Boolean);
+      }
+
+      function leerSesion() {
+        for (const a of almacenes()) {
+          try {
+            const s = JSON.parse(a.getItem(CLAVE_SESION));
+            if (s && s.id && s.kek && (!s.exp || s.exp > Date.now())) return s;
+          } catch (e) { /* ilegible */ }
+        }
+        borrarSesion();     // caducada o ilegible
+        return null;
+      }
+
+      function borrarSesion() {
+        for (const a of almacenes()) { try { a.removeItem(CLAVE_SESION); } catch (e) { /* nada */ } }
+      }
+
+      function guardarSesion(sesion, recordar) {
+        borrarSesion();
+        try {
+          (recordar ? window.localStorage : window.sessionStorage).setItem(CLAVE_SESION, JSON.stringify(sesion));
+        } catch (e) { /* sin almacenamiento: habrá que iniciar sesión en cada visita */ }
+      }
+
+      async function listo(publicado) {
+        PUBLICADO = publicado;
+        $("cargando").hidden = true;
+        if (!(window.crypto && crypto.subtle)) {
+          mostrarAcceso("Ce navigateur ne permet pas d’ouvrir les données (une connexion HTTPS est nécessaire).");
+          return;
+        }
+        const sesion = leerSesion();
+        if (sesion) {
+          try {
+            mostrarPanel(await abrir(sesion.id, deB64(sesion.kek)));
+            return;
+          } catch (e) {
+            borrarSesion();     // contraseña cambiada o cuenta eliminada
+            mostrarAcceso("Votre accès a changé. Veuillez vous reconnecter.");
+            return;
+          }
+        }
+        mostrarAcceso();
+      }
+
+      function mostrarAcceso(error) {
+        $("panel").hidden = true;
+        $("acceso").hidden = false;
+        if (error) {
+          $("error-acceso").textContent = error;
+          $("error-acceso").hidden = false;
+        }
+        $("usuario").focus();
+      }
+
+      function mostrarPanel(datos) {
+        $("acceso").hidden = true;
+        $("panel").hidden = false;
+        iniciar(datos);
+        $("titulo").tabIndex = -1;       // el foco estaba en el botón, que ya no se ve
+        $("titulo").focus();
+        vigilarActualizaciones();
+      }
+
+      // ---------- Datos nuevos mientras la página está abierta ----------
+      // La tarea publica cada vez que cambia el stock; sin esto, una pestaña abierta
+      // toda la mañana seguiría mostrando los números de la primera carga.
+      let ultimaComprobacion = Date.now();
+
+      async function hayDatosNuevos() {
+        ultimaComprobacion = Date.now();
+        try {
+          const respuesta = await fetch("datos.js?v=" + Date.now(), { cache: "no-store" });
+          if (!respuesta.ok) return false;
+          const texto = await respuesta.text();
+          const inicio = texto.indexOf("{");
+          const nuevo = JSON.parse(texto.slice(inicio, texto.lastIndexOf(";")));
+          return nuevo.huella !== PUBLICADO.huella;
+        } catch (e) {
+          return false;     // sin red o servido desde un archivo local
+        }
+      }
+
+      function vigilarActualizaciones() {
+        const comprobar = async () => {
+          if (document.visibilityState !== "visible") return;
+          if (await hayDatosNuevos()) location.reload();
+        };
+        setInterval(comprobar, 5 * 60 * 1000);
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible" && Date.now() - ultimaComprobacion > 60 * 1000) {
+            comprobar();
+          }
+        });
+      }
+
+      $("form-acceso").addEventListener("submit", async evento => {
+        evento.preventDefault();
+        const boton = $("entrar");
+        const error = $("error-acceso");
+        error.hidden = true;
+        boton.disabled = true;
+        boton.textContent = "Connexion…";
+        try {
+          const kek = await derivar($("contrasena").value, deB64(PUBLICADO.sal),
+                                    $("usuario").value.trim().toLowerCase(), PUBLICADO.iteraciones);
+          const id = await idDesdeClave(kek);
+          const datos = await abrir(id, kek);
+          guardarSesion({ id, kek: aB64(kek), exp: Date.now() + DIAS_SESION * 864e5 },
+                        $("recordar").checked);
+          $("contrasena").value = "";
+          mostrarPanel(datos);
+        } catch (e) {
+          error.textContent = "Identifiant ou mot de passe incorrect.";
+          error.hidden = false;
+          $("contrasena").select();
+        } finally {
+          boton.disabled = false;
+          boton.textContent = "Se connecter";
+        }
+      });
+
+      $("salir").addEventListener("click", () => {
+        borrarSesion();
+        location.reload();
+      });
+
+      // "2026-09-11" (Excel) -> "11 septembre 2026".
+      // "2026-09-11T10:45:00-06:00" (ERP) -> fecha y hora en la zona horaria de quien mira la página.
+      function formatearFecha(valor) {
+        const s = String(valor);
+        const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+        if (soloFecha) {
+          const [a, m, d] = [+soloFecha[1], +soloFecha[2], +soloFecha[3]];
+          const fecha = new Date(a, m - 1, d);
+          if (fecha.getFullYear() !== a || fecha.getMonth() !== m - 1 || fecha.getDate() !== d) return s;
+          return fecha.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+        }
+        if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+          const d = new Date(s);
+          if (!isNaN(d)) {
+            return d.toLocaleString("fr-FR", {
+              day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit"
+            });
+          }
+        }
+        return s;
+      }
+
+      function iniciar(DATOS) {
+        const columnas = Array.isArray(DATOS.columnas) ? DATOS.columnas : [];
+        const filas = (Array.isArray(DATOS.filas) ? DATOS.filas : []).filter(Array.isArray);
+
+        // ---------- Cabecera ----------
+        $("titulo").textContent = DATOS.titulo || "Stock";
+        document.title = DATOS.titulo || "Stock";
+        if (DATOS.subtitulo) {
+          $("subtitulo").textContent = DATOS.subtitulo;
+          $("subtitulo").hidden = false;
+        }
+        if (DATOS.fecha_actualizacion) {
+          $("fecha").innerHTML = "Date de mise à jour : <strong></strong>";
+          $("fecha").querySelector("strong").textContent = formatearFecha(DATOS.fecha_actualizacion);
+        }
+
+        // ---------- Notas ----------
+        if (Array.isArray(DATOS.notas) && DATOS.notas.length) {
+          const cont = $("notas");
+          DATOS.notas.forEach(n => {
+            const p = document.createElement("p");
+            p.textContent = n;
+            cont.appendChild(p);
+          });
+          cont.hidden = false;
+        }
+
+        // ---------- Columnas numéricas (por mayoría de valores no vacíos) ----------
+        const esNumero = v => typeof v === "number" && isFinite(v);
+        const colNumerica = columnas.map((_, i) => {
+          const v = filas.map(f => f[i]).filter(x => x !== "" && x != null);
+          return v.length > 0 && v.filter(esNumero).length * 2 > v.length;
+        });
+        const fmtNum = new Intl.NumberFormat("fr-FR");
+
+        // ---------- Filtros por columna (solo texto con pocos valores distintos) ----------
+        const filtros = {};
+        const barra = $("barra");
+        const conteo = $("conteo");
+        columnas.forEach((nombre, i) => {
+          if (colNumerica[i]) return;
+          const valores = [...new Set(filas.map(f => String(f[i] ?? "")).filter(v => v !== ""))];
+          if (valores.length < 2 || valores.length > 12) return;
+          valores.sort((a, b) => a.localeCompare(b, "fr"));
+          const sel = document.createElement("select");
+          sel.setAttribute("aria-label", nombre);
+          const opt0 = document.createElement("option");
+          opt0.value = "";
+          opt0.textContent = nombre + " : tous";
+          sel.appendChild(opt0);
+          valores.forEach(v => {
+            const o = document.createElement("option");
+            o.value = v; o.textContent = v;
+            sel.appendChild(o);
+          });
+          sel.addEventListener("change", () => { filtros[i] = sel.value; render(); });
+          barra.insertBefore(sel, conteo);
+        });
+
+        // ---------- Orden ----------
+        let ordenCol = -1, ordenAsc = true;
+
+        function renderEncabezado() {
+          const tr = $("encabezado");
+          tr.innerHTML = "";
+          columnas.forEach((nombre, i) => {
+            const th = document.createElement("th");
+            th.textContent = nombre;
+            th.scope = "col";
+            th.tabIndex = 0;
+            th.title = "Trier";
+            if (colNumerica[i]) th.classList.add("num");
+            th.setAttribute("aria-sort", i === ordenCol ? (ordenAsc ? "ascending" : "descending") : "none");
+            if (i === ordenCol) {
+              const f = document.createElement("span");
+              f.className = "flecha";
+              f.textContent = ordenAsc ? "▲" : "▼";
+              th.appendChild(f);
+            }
+            const ordenar = () => {
+              if (ordenCol === i) ordenAsc = !ordenAsc; else { ordenCol = i; ordenAsc = true; }
+              render();
+              const nuevo = $("encabezado").children[i];
+              if (nuevo) nuevo.focus();
+            };
+            th.addEventListener("click", ordenar);
+            th.addEventListener("keydown", e => {
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ordenar(); }
+            });
+            tr.appendChild(th);
+          });
+        }
+
+        function filasVisibles() {
+          const q = $("buscar").value.trim().toLowerCase();
+          const qn = q.replace(/\s/g, "");   // "12 098" -> "12098" (también espacios finos)
+          let lista = filas.filter(f =>
+            Object.keys(filtros).every(i => !filtros[i] || String(f[i] ?? "") === filtros[i])
+          );
+          if (q) {
+            lista = lista.filter(f => f.some(v =>
+              String(v ?? "").toLowerCase().includes(q) ||
+              (esNumero(v) && qn !== "" && String(v).includes(qn))
+            ));
+          }
+          if (ordenCol >= 0) {
+            lista = lista.slice().sort((a, b) => {
+              const x = a[ordenCol], y = b[ordenCol];
+              const xv = x !== "" && x != null, yv = y !== "" && y != null;
+              // Vacíos siempre al final, números antes que texto, en ambos sentidos
+              if (xv !== yv) return xv ? -1 : 1;
+              if (esNumero(x) !== esNumero(y)) return esNumero(x) ? -1 : 1;
+              const r = esNumero(x) ? x - y
+                : String(x ?? "").localeCompare(String(y ?? ""), "fr", { numeric: true });
+              return ordenAsc ? r : -r;
+            });
+          }
+          return lista;
+        }
+
+        function celda(valor, i) {
+          const td = document.createElement("td");
+          if (colNumerica[i]) {
+            td.classList.add("num");
+            td.textContent = esNumero(valor) ? fmtNum.format(valor) : String(valor ?? "");
+          } else if (typeof valor === "string" && /^\W*exclusif\b/i.test(valor)) {
+            const b = document.createElement("span");
+            b.className = "badge";
+            b.textContent = valor;
+            td.appendChild(b);
+          } else {
+            td.textContent = String(valor ?? "");
+          }
+          return td;
+        }
+
+        function render() {
+          renderEncabezado();
+          const lista = filasVisibles();
+          const cuerpo = $("cuerpo");
+          cuerpo.innerHTML = "";
+          if (!lista.length) {
+            const tr = document.createElement("tr");
+            const td = document.createElement("td");
+            td.colSpan = columnas.length || 1;
+            td.className = "vacio";
+            td.textContent = "Aucun résultat.";
+            tr.appendChild(td);
+            cuerpo.appendChild(tr);
+          } else {
+            const frag = document.createDocumentFragment();
+            lista.forEach(f => {
+              const tr = document.createElement("tr");
+              columnas.forEach((_, i) => tr.appendChild(celda(f[i], i)));
+              frag.appendChild(tr);
+            });
+            cuerpo.appendChild(frag);
+          }
+          conteo.textContent = lista.length + " / " + filas.length + " références";
+        }
+
+        $("buscar").addEventListener("input", render);
+        render();
+      }
+
+      cargarDatos();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# Herramientas locales
+.claude/
+__pycache__/
+*.pyc
+*.tmp
+# No subir los reportes fuente
+*.xlsx
+# Configuración local (vive en %LOCALAPPDATA%\StockDTI; el repositorio es público)
+config_stock.json
+*.dat
