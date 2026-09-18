@@ -273,7 +273,7 @@ def sincronizar(fuente=("--db",)):
             log.warning(f"La copia instalada no tiene los últimos cambios de {', '.join(viejos)}; "
                         "ejecuta: python sincronizar.py --instalar")
         resultado, ultima = ciclo(list(fuente))
-        log.info(f"{resultado.upper()}: {ultima}")
+        log.info(ultima if ultima.upper().startswith(resultado.upper()) else f"{resultado.upper()}: {ultima}")
         guardar_estado(resultado, ultima)
         return 0
     except ErrorSync as e:
