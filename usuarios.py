@@ -291,7 +291,34 @@ def _mostrar_contrasena(nombre, contrasena, generada):
         print(f"  Contraseña: {contrasena}")
         print("  Anótala ahora: no se vuelve a mostrar. Si se pierde, genera otra con")
         print(f"    python usuarios.py contrasena {nombre}")
-    print("\nLa página se actualiza en la siguiente sincronización (o ya, con: python sincronizar.py).")
+
+
+def publicar_cambios():
+    """Publica el cambio en cuanto se hace: mientras no se publique, la página
+    sigue aceptando solo las contraseñas anteriores."""
+    import subprocess
+    script = next((c for c in (DIR_LOCAL / "programa" / "sincronizar.py",
+                               Path(__file__).with_name("sincronizar.py")) if c.exists()), None)
+    if script is None:
+        print("\nPublica el cambio con: python sincronizar.py")
+        return
+    print("\nPublicando el cambio…")
+    exe = Path(sys.executable)
+    python = exe.with_name("python.exe") if exe.with_name("python.exe").exists() else exe
+    try:
+        r = subprocess.run([str(python), str(script)], capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=600,
+                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    except (OSError, subprocess.TimeoutExpired) as e:
+        print(f"  No se pudo publicar ahora ({e}); la tarea programada lo intentará sola.")
+        return
+    lineas = [l for l in (r.stdout + r.stderr).splitlines() if l.strip()]
+    print("  " + (lineas[-1] if lineas else ""))
+    if r.returncode == 0:
+        print("  La página lo tendrá en uno o dos minutos (GitHub Pages tarda un poco en publicar).")
+    else:
+        print("  No se pudo publicar ahora; la tarea programada lo intentará en su próxima pasada,\n"
+              "  o puedes reintentar con: python sincronizar.py")
 
 
 def consola_segura():
@@ -333,8 +360,7 @@ def main(argv=None):
         guardar_protegido(REGISTRO, reg)
         print(f"Cuenta «{nombre}» eliminada.")
         if reg["usuarios"]:
-            print("Dejará de ver los datos en cuanto se publique la siguiente actualización "
-                  "(o ya, con: python sincronizar.py).")
+            publicar_cambios()
         else:
             print("AVISO: ya no queda ninguna cuenta, así que no se puede publicar nada nuevo y\n"
                   "la página seguirá mostrando los últimos datos publicados, que esa cuenta todavía\n"
@@ -351,6 +377,7 @@ def main(argv=None):
     guardar_protegido(REGISTRO, reg)
     print(f"Cuenta «{nombre}» {'creada' if args.accion == 'agregar' else 'actualizada'}.")
     _mostrar_contrasena(nombre, contrasena, generada=not args.escribir)
+    publicar_cambios()
 
 
 if __name__ == "__main__":

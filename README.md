@@ -135,8 +135,9 @@ mostrando el último stock publicado, con su fecha.
   descargar `datos.js` y probar contraseñas sin límite en su propia máquina).
 - El nombre de la cuenta es lo que la persona escribe en «Identifiant»: letras
   sin acentos, números, punto, guion o @ (por ejemplo `maria.lopez`).
-- Los cambios llegan a la página en la siguiente sincronización. Para aplicarlos
-  ya: `python sincronizar.py`.
+- Crear, renovar o quitar una cuenta publica el cambio automáticamente; la página
+  lo tiene uno o dos minutos después (lo que tarda GitHub Pages). Hasta entonces
+  sigue valiendo la contraseña anterior.
 - Quien marca «Rester connecté» no vuelve a escribir la contraseña en ese
   navegador durante 30 días, o hasta pulsar «Se déconnecter», o hasta que se le
   cambie la contraseña o se le quite la cuenta.
