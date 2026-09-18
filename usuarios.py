@@ -19,7 +19,7 @@ python sincronizar.py). Al quitar una cuenta, esa persona deja de poder abrir
 los datos que se publiquen desde ese momento.
 
 Las cuentas se guardan cifradas con Windows (DPAPI) en
-%LOCALAPPDATA%\StockDTI\usuarios.dat. De cada una no se guarda la contraseña,
+%USERPROFILE%\StockDTI\usuarios.dat. De cada una no se guarda la contraseña,
 sino la clave que se deriva de ella.
 """
 import argparse
@@ -36,8 +36,11 @@ from datetime import datetime
 from pathlib import Path
 
 # Datos locales de esta máquina (fuera del repositorio, que es público)
+# Carpeta de datos locales. Va en el perfil del usuario, no en %LOCALAPPDATA%:
+# algunas aplicaciones (las del Store) redirigen AppData a una carpeta privada
+# que la tarea programada no ve.
 DIR_LOCAL = Path(os.environ.get("STOCKDTI_DIR")
-                 or Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "StockDTI")
+                 or Path(os.environ.get("USERPROFILE") or Path.home()) / "StockDTI")
 REGISTRO = DIR_LOCAL / "usuarios.dat"
 
 # PBKDF2-SHA256: mismo algoritmo que usa la página con WebCrypto

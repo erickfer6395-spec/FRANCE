@@ -21,12 +21,12 @@ cada 15 minutos.
 | Dónde | Qué |
 |---|---|
 | Repositorio (público) | `index.html`, `datos.js` (cifrado), los scripts y este README |
-| `%LOCALAPPDATA%\StockDTI\config_stock.json` | Qué referencias se publican, con su código del ERP y el texto de la página |
-| `%LOCALAPPDATA%\StockDTI\conexion.dat` | Conexión al ERP, cifrada con tu usuario de Windows |
-| `%LOCALAPPDATA%\StockDTI\usuarios.dat` | Cuentas de acceso, cifradas con tu usuario de Windows |
-| `%LOCALAPPDATA%\StockDTI\programa\` | Copia fija de los scripts que ejecuta la tarea |
-| `%LOCALAPPDATA%\StockDTI\repo\` | Copia del repositorio donde la tarea escribe y publica `datos.js` |
-| `%LOCALAPPDATA%\StockDTI\sincronizar.log` | Registro de la sincronización |
+| `%USERPROFILE%\StockDTI\config_stock.json` | Qué referencias se publican, con su código del ERP y el texto de la página |
+| `%USERPROFILE%\StockDTI\conexion.dat` | Conexión al ERP, cifrada con tu usuario de Windows |
+| `%USERPROFILE%\StockDTI\usuarios.dat` | Cuentas de acceso, cifradas con tu usuario de Windows |
+| `%USERPROFILE%\StockDTI\programa\` | Copia fija de los scripts que ejecuta la tarea |
+| `%USERPROFILE%\StockDTI\repo\` | Copia del repositorio donde la tarea escribe y publica `datos.js` |
+| `%USERPROFILE%\StockDTI\sincronizar.log` | Registro de la sincronización |
 
 La tarea **nunca ejecuta código descargado de GitHub**: usa la copia fija que
 instala `--instalar`. Así, aunque alguien consiguiera subir algo al repositorio,
@@ -86,7 +86,7 @@ mostrando el último stock publicado, con su fecha.
 3. Lista de referencias. Copia la plantilla y edítala (ver «Referencias»):
 
    ```bash
-   copy config_stock.ejemplo.json "%LOCALAPPDATA%\StockDTI\config_stock.json"
+   copy config_stock.ejemplo.json "%USERPROFILE%\StockDTI\config_stock.json"
    python generar_datos.py --buscar marts 23
    python generar_datos.py --db --probar
    ```
@@ -112,7 +112,7 @@ mostrando el último stock publicado, con su fecha.
    ```
 
 6. Instalar la tarea programada. Registra «StockDTI\Sincronizar stock», copia los
-   scripts a `%LOCALAPPDATA%\StockDTI\programa` y sincroniza por primera vez:
+   scripts a `%USERPROFILE%\StockDTI\programa` y sincroniza por primera vez:
 
    ```bash
    python sincronizar.py --instalar
@@ -157,7 +157,7 @@ mostrando el último stock publicado, con su fecha.
 
 ## Referencias
 
-Se editan en `%LOCALAPPDATA%\StockDTI\config_stock.json` (con el Bloc de notas
+Se editan en `%USERPROFILE%\StockDTI\config_stock.json` (con el Bloc de notas
 basta). La plantilla `config_stock.ejemplo.json` trae el archivo completo:
 
 | Clave | Qué es |
@@ -212,7 +212,7 @@ no lo hagas, `--estado` y el registro avisan de que la copia instalada está vie
 - **Error de conexión al ERP**: vuelve a ejecutar `python generar_datos.py --configurar`
   (por ejemplo, si cambió la contraseña).
 - **Error al publicar en GitHub**: o la sesión de GitHub caducó, o esa PC nunca
-  guardó la credencial. Abre una terminal en `%LOCALAPPDATA%\StockDTI\repo`,
+  guardó la credencial. Abre una terminal en `%USERPROFILE%\StockDTI\repo`,
   ejecuta `git push` e inicia sesión en la ventana que aparece.
 - **Alguien no puede entrar**: comprueba el nombre con `python usuarios.py lista`
   y, si hace falta, dale una contraseña nueva con `python usuarios.py contrasena NOMBRE`.

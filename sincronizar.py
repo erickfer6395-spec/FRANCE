@@ -9,7 +9,7 @@ Una tarea programada de Windows lo ejecuta cada 15 minutos con pythonw.exe
   2. lee el stock del ERP y escribe datos.js cifrado (generar_datos.py --db),
   3. si cambió algo, hace commit de datos.js y push.
 
-Todo lo que usa la tarea vive en %LOCALAPPDATA%\StockDTI, fuera de tu carpeta
+Todo lo que usa la tarea vive en %USERPROFILE%\StockDTI, fuera de tu carpeta
 de trabajo:
     programa\           copia fija de los scripts (la instala --instalar; la
                         tarea nunca ejecuta código descargado de GitHub)
@@ -25,7 +25,7 @@ Uso:
     python sincronizar.py --estado                 estado de la tarea y últimas líneas del registro
     python sincronizar.py --desinstalar            elimina la tarea programada
 
-Registro: %LOCALAPPDATA%\StockDTI\sincronizar.log
+Registro: %USERPROFILE%\StockDTI\sincronizar.log
 """
 import argparse
 import hashlib
@@ -348,7 +348,6 @@ TAREA_XML = """<?xml version="1.0" encoding="UTF-16"?>
     <Exec>
       <Command>{comando}</Command>
       <Arguments>{argumentos}</Arguments>
-      <WorkingDirectory>{carpeta}</WorkingDirectory>
     </Exec>
   </Actions>
 </Task>
@@ -384,7 +383,6 @@ def registrar_tarea(cada):
         usuario=escape(f"{dominio}\\{usuario}" if dominio else usuario),
         comando=escape(str(pythonw)),
         argumentos=escape(f'"{PROGRAMA / "sincronizar.py"}"'),
-        carpeta=escape(str(PROGRAMA)),
     )
     archivo = DIR_LOCAL / "tarea.xml"
     archivo.write_text(xml, encoding="utf-16")
